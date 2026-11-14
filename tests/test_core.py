@@ -128,9 +128,83 @@ def test_save_and_load_round_trip(tmp_path):
 
 
 # Milestone 3: Implement next-item prediction logic using the trained model.
-@pytest.mark.skip(reason="remove this line when you start milestone 3")
-def test_milestone_3():
-    raise NotImplementedError("write the test for milestone 3")
+CATALOG = {"Onion 1 kg", "Tomato 1 kg", "Potato 1 kg", "Milk 500 ml", "Bread", "Eggs 6"}
+BASELINE = [("Milk 500 ml", 0.4), ("Onion 1 kg", 0.3), ("Bread", 0.2), ("Eggs 6", 0.1)]
+
+
+def fake_sampler(outputs, calls=None):
+    """Stands in for the model: returns the given continuations and records the prompt it was asked to complete."""
+    def sample(prompt, n_samples, max_new_tokens, seed):
+        if calls is not None:
+            calls.append(prompt)
+        return (outputs * n_samples)[:n_samples]
+    return sample
+
+
+def test_parse_item_takes_the_first_catalogue_name():
+    assert core.parse_item(" Tomato 1 kg; Onion", CATALOG) == "Tomato 1 kg"
+    assert core.parse_item(" Bread", CATALOG) == "Bread"                       # basket ended after the item
+    assert core.parse_item(" Tomato 1 k", CATALOG) is None                     # cut off / made up
+    assert core.parse_item("", CATALOG) is None
+    assert core.parse_item(" Chocolate Cake;", CATALOG) is None
+
+
+def test_predict_next_ranks_by_votes_and_skips_the_basket():
+    calls = []
+    outputs = [" Tomato 1 kg;", " Tomato 1 kg;", " Onion 1 kg;", " Potato 1 kg;", " Made Up Item;"]
+    preds = core.predict_next(["Onion 1 kg", "Bread"], catalog=CATALOG, top_n=2, n_samples=10,
+                              sampler=fake_sampler(outputs, calls))
+    assert calls[0].startswith("Basket: ") and calls[0].endswith(";")
+    assert "Onion 1 kg" in calls[0] and "Bread" in calls[0]
+    assert [p.item for p in preds] == ["Tomato 1 kg", "Potato 1 kg"]     # Onion is in the basket already
+    assert preds[0].confidence == pytest.approx(0.4) and preds[1].confidence == pytest.approx(0.2)
+    assert all(p.source == "model" for p in preds)
+
+
+def test_ties_go_to_the_better_seller():
+    preds = core.predict_next([], catalog=CATALOG, top_n=3, n_samples=3, baseline=BASELINE,
+                              sampler=fake_sampler([" Eggs 6;", " Bread;", " Milk 500 ml;"]))
+    assert [p.item for p in preds] == ["Milk 500 ml", "Bread", "Eggs 6"]      # one vote each: baseline order
+
+
+def test_confidences_are_sorted_and_sum_to_at_most_one():
+    outputs = [" Tomato 1 kg;", " Eggs 6;", " Tomato 1 kg;", " Potato 1 kg;", "", " Eggs 6;", " Tomato 1 kg;"]
+    preds = core.predict_next([], catalog=CATALOG, top_n=5, n_samples=7, sampler=fake_sampler(outputs))
+    confidences = [p.confidence for p in preds]
+    assert confidences == sorted(confidences, reverse=True)
+    assert sum(confidences) <= 1 + 1e-9
+    assert core.predict_next([], catalog=CATALOG, sampler=fake_sampler(outputs)) == \
+        core.predict_next([], catalog=CATALOG, sampler=fake_sampler(outputs))
+
+
+def test_short_lists_are_filled_from_the_baseline():
+    preds = core.predict_next(["Onion 1 kg"], catalog=CATALOG, top_n=4, n_samples=5, baseline=BASELINE,
+                              sampler=fake_sampler([" Bread;", " not an item;"]))
+    assert [p.item for p in preds] == ["Bread", "Milk 500 ml", "Eggs 6"]   # baseline skips Onion and Bread
+    assert [p.source for p in preds] == ["model", "baseline", "baseline"]
+    assert len(core.predict_next([], catalog=CATALOG, top_n=3, sampler=fake_sampler([""]), baseline=BASELINE)) == 3
+
+
+def test_real_sampler_writes_token_by_token_and_stops_at_a_semicolon():
+    class Tok:                      # ids 0..99: 0 = end-of-text, 59 = ";", others = one letter each
+        eos_token_id = 0
+
+        def __len__(self):
+            return 100
+
+        def get_vocab(self):
+            return {(";" if i == 59 else f"t{i}"): i for i in range(100)}
+
+        def encode(self, text):
+            return [3 + ord(c) % 90 for c in text]
+
+        def decode(self, ids):
+            return "".join(";" if i == 59 else chr(65 + i % 26) for i in ids)
+
+    sample = core.model_sampler(tiny_model(), Tok())
+    texts = sample("Basket: A;", n_samples=6, max_new_tokens=300, seed=1)
+    assert len(texts) == 6 and texts == sample("Basket: A;", n_samples=6, max_new_tokens=300, seed=1)
+    assert all(t.count(";") <= 1 and (t == "" or t.endswith(";") or ";" not in t) for t in texts)
 
 
 # Milestone 4: Build a Streamlit UI to input a partial basket and display predictions.

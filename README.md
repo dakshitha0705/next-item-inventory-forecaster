@@ -16,7 +16,7 @@ Tick these off as you go, and commit after each one.
       Hint: Use text processing techniques to represent SKUs as tokens and create sequences.
 - [x] **2. Continue pretrain a small language model on these SKU sequences.**  
       Hint: Apply continued-pretraining from the 'Teach a Language Model What Sells Together' drill.
-- [ ] **3. Implement next-item prediction logic using the trained model.**  
+- [x] **3. Implement next-item prediction logic using the trained model.**  
       Hint: Implement token-by-token generation, similar to text completion, for next-item prediction.
 - [ ] **4. Build a Streamlit UI to input a partial basket and display predictions.**  
       Hint: Utilize Streamlit widgets like `st.text_input` and `st.button` for the UI.
