@@ -12,7 +12,7 @@ This 'Next-Item Inventory Forecaster' project helps store managers optimize inve
 
 Tick these off as you go, and commit after each one.
 
-- [ ] **1. Prepare mock sales transaction data as sequences of SKUs.**  
+- [x] **1. Prepare mock sales transaction data as sequences of SKUs.**  
       Hint: Use text processing techniques to represent SKUs as tokens and create sequences.
 - [ ] **2. Continue pretrain a small language model on these SKU sequences.**  
       Hint: Apply continued-pretraining from the 'Teach a Language Model What Sells Together' drill.
