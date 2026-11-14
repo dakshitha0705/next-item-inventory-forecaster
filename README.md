@@ -18,7 +18,7 @@ Tick these off as you go, and commit after each one.
       Hint: Apply continued-pretraining from the 'Teach a Language Model What Sells Together' drill.
 - [x] **3. Implement next-item prediction logic using the trained model.**  
       Hint: Implement token-by-token generation, similar to text completion, for next-item prediction.
-- [ ] **4. Build a Streamlit UI to input a partial basket and display predictions.**  
+- [x] **4. Build a Streamlit UI to input a partial basket and display predictions.**  
       Hint: Utilize Streamlit widgets like `st.text_input` and `st.button` for the UI.
 - [ ] **5. Evaluate model performance against a simple baseline.**  
       Hint: Compare your model's top-N accuracy against a simple frequency-based baseline.

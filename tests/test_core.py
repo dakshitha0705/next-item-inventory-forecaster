@@ -208,9 +208,40 @@ def test_real_sampler_writes_token_by_token_and_stops_at_a_semicolon():
 
 
 # Milestone 4: Build a Streamlit UI to input a partial basket and display predictions.
-@pytest.mark.skip(reason="remove this line when you start milestone 4")
-def test_milestone_4():
-    raise NotImplementedError("write the test for milestone 4")
+@pytest.fixture
+def app_without_model(monkeypatch, tmp_path):
+    from streamlit.testing.v1 import AppTest
+    monkeypatch.setenv("MODEL_DIR", str(tmp_path / "no-model-here"))
+    monkeypatch.setenv("N_BASKETS", str(N))
+    at = AppTest.from_file("../app/main.py", default_timeout=60)   # relative to this file
+    at.run()
+    return at
+
+
+def test_page_runs_without_a_model_and_says_so(app_without_model):
+    at = app_without_model
+    assert not at.exception
+    assert "No trained model" in at.warning[0].value
+    assert at.button(key="predict") and at.text_input and at.multiselect
+
+
+def test_predict_button_shows_a_results_table(app_without_model):
+    at = app_without_model
+    basket = core.catalog_names()[:2]
+    at.multiselect(key="basket").set_value(basket).run()
+    at.slider[0].set_value(5).run()
+    at.button(key="predict").click().run()
+    assert not at.exception
+    table = at.dataframe[0].value
+    assert list(table.columns)[:3] == ["rank", "item", "category"] and len(table) == 5
+    assert not set(table["item"]) & set(basket)                       # never suggests what is already there
+    assert set(table["source"]) == {"baseline"}
+
+
+def test_search_box_narrows_the_basket_choices(app_without_model):
+    at = app_without_model
+    at.text_input[0].set_value("toor dal").run()
+    assert at.multiselect(key="basket").options and all("Toor Dal" in o for o in at.multiselect(key="basket").options)
 
 
 # Milestone 5: Evaluate model performance against a simple baseline.
