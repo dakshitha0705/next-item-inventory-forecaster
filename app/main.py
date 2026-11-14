@@ -74,8 +74,11 @@ if "results" in st.session_state:
     table = pd.DataFrame({"rank": range(1, len(predictions) + 1),
                           "item": [p.item for p in predictions],
                           "category": [categories.get(p.item, "") for p in predictions],
+                          "confidence": [p.confidence for p in predictions],
                           "source": [p.source for p in predictions]})
     st.subheader("Likely next items")
-    st.dataframe(table, hide_index=True)
-    st.caption(f"{seconds:.1f} s. 'model': the language model wrote this item when completing the basket; "
-               "'baseline': filled in from the shop's best sellers.")
+    st.dataframe(table, hide_index=True, column_config={
+        "confidence": st.column_config.ProgressColumn("confidence", min_value=0.0, max_value=1.0, format="percent")})
+    st.caption(f"{seconds:.1f} s. Confidence for 'model' rows: the share of the model's sampled completions that "
+               "named this item. For 'baseline' rows (filled in from the shop's best sellers): the share of past "
+               "baskets that held it.")

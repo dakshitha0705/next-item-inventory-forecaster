@@ -301,3 +301,13 @@ def test_clear_basket_button_empties_basket_and_results(app_without_model):
     at.button(key="clear").click().run()
     assert not at.exception
     assert at.multiselect(key="basket").value == [] and not at.dataframe
+
+
+# Stretch: show a confidence score next to each predicted item.
+def test_results_table_shows_a_confidence_per_item(app_without_model):
+    at = app_without_model
+    at.button(key="predict").click().run()
+    table = at.dataframe[0].value
+    assert "confidence" in table.columns
+    assert table["confidence"].between(0, 1).all() and table["confidence"].is_monotonic_decreasing
+    assert "Confidence" in at.caption[0].value
