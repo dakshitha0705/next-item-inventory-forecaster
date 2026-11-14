@@ -14,7 +14,7 @@ Tick these off as you go, and commit after each one.
 
 - [x] **1. Prepare mock sales transaction data as sequences of SKUs.**  
       Hint: Use text processing techniques to represent SKUs as tokens and create sequences.
-- [ ] **2. Continue pretrain a small language model on these SKU sequences.**  
+- [x] **2. Continue pretrain a small language model on these SKU sequences.**  
       Hint: Apply continued-pretraining from the 'Teach a Language Model What Sells Together' drill.
 - [ ] **3. Implement next-item prediction logic using the trained model.**  
       Hint: Implement token-by-token generation, similar to text completion, for next-item prediction.
@@ -37,6 +37,19 @@ pytest
 
 Your work goes in `app/core.py` (one stub per milestone) and `tests/test_core.py`. The first tests pass already; they
 check the plumbing.
+
+## Train a model
+
+A trained model goes in `models/forecaster/` (git-ignored; set `MODEL_DIR` to use another folder). Either copy the
+drill's checkpoint there, or continue pretraining SmolLM2-135M on the mock baskets yourself:
+
+```bash
+python scripts/prepare_data.py                                  # optional: writes data/train.txt and data/val.txt
+python scripts/train.py --steps 100 --batch 16 --out models/forecaster
+python scripts/train.py --steps 5 --out models/proof-5          # quick end-to-end check (~2 min on a laptop CPU)
+```
+
+The 5-step check was run on a Windows laptop CPU: held-out loss 3.509 -> 2.126, 2.0 min, saved and reloaded.
 
 ## Settings and secrets
 

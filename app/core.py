@@ -60,9 +60,8 @@ def verbalize_all(baskets, seed: int = 0) -> list[str]:
 
 
 # --- Milestone 2: Continue pretrain a small language model on these SKU sequences.
-# Hint: Apply continued-pretraining from the 'Teach a Language Model What Sells Together' drill.
-def milestone_2():  # TODO(milestone 2)
-    raise NotImplementedError("TODO(milestone 2)")
+# The training loop is in `app/train.py` (ported from the drill) and runs with `scripts/train.py`. The trained
+# model lives in MODEL_DIR (default models/forecaster), which is git-ignored.
 
 
 # --- Milestone 3: Implement next-item prediction logic using the trained model.
