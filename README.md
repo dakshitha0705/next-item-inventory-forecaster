@@ -76,5 +76,5 @@ reaches GitHub, treat it as leaked and make a new one.
 ## Stretch ideas
 
 - [x] Add a feature to filter predicted next items by product category.
-- [ ] Implement a 'clear basket' button in the Streamlit UI to easily start new predictions.
+- [x] Implement a 'clear basket' button in the Streamlit UI to easily start new predictions.
 - [ ] Display a 'confidence score' or probability alongside each predicted item.

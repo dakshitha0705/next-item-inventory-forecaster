@@ -36,6 +36,14 @@ if sampler is None:
                "sellers) instead. Copy a model there or run `python scripts/train.py` (see README).")
 
 st.session_state.setdefault("basket", [])
+
+
+def clear_basket():
+    """Start a new prediction: empty basket, no old results. (A callback, so it runs before the widgets.)"""
+    st.session_state.basket = []
+    st.session_state.pop("results", None)
+
+
 search = st.text_input("Search the catalogue", placeholder="e.g. dal, milk, rice, shampoo")
 matches = [n for n in names if search.strip().lower() in n.lower()]
 options = [n for n in names if n in set(matches) | set(st.session_state.basket)]   # keep chosen items visible
@@ -45,7 +53,11 @@ top_n = st.slider("How many suggestions", min_value=3, max_value=20, value=10)
 only = st.multiselect("Only suggest items from these categories (optional)", sorted(set(categories.values())),
                       key="categories", placeholder="All categories")
 
-if st.button("Predict next items", type="primary", key="predict"):
+predict_column, clear_column = st.columns(2)
+predict = predict_column.button("Predict next items", type="primary", key="predict")
+clear_column.button("Clear basket", key="clear", on_click=clear_basket)
+
+if predict:
     started = time.time()
     basket = st.session_state.basket
     allowed = core.items_in_categories(only)

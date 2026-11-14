@@ -290,3 +290,14 @@ def test_page_category_filter(app_without_model):
     at.button(key="predict").click().run()
     table = at.dataframe[0].value
     assert len(table) == 10 and set(table["category"]) == {"Spices"}
+
+
+# Stretch: a "clear basket" button to start a new prediction.
+def test_clear_basket_button_empties_basket_and_results(app_without_model):
+    at = app_without_model
+    at.multiselect(key="basket").set_value(core.catalog_names()[:3]).run()
+    at.button(key="predict").click().run()
+    assert at.dataframe
+    at.button(key="clear").click().run()
+    assert not at.exception
+    assert at.multiselect(key="basket").value == [] and not at.dataframe
