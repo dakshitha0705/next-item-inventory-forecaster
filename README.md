@@ -20,7 +20,7 @@ Tick these off as you go, and commit after each one.
       Hint: Implement token-by-token generation, similar to text completion, for next-item prediction.
 - [x] **4. Build a Streamlit UI to input a partial basket and display predictions.**  
       Hint: Utilize Streamlit widgets like `st.text_input` and `st.button` for the UI.
-- [ ] **5. Evaluate model performance against a simple baseline.**  
+- [x] **5. Evaluate model performance against a simple baseline.**  
       Hint: Compare your model's top-N accuracy against a simple frequency-based baseline.
 
 ## Run it
@@ -50,6 +50,23 @@ python scripts/train.py --steps 5 --out models/proof-5          # quick end-to-e
 ```
 
 The 5-step check was run on a Windows laptop CPU: held-out loss 3.509 -> 2.126, 2.0 min, saved and reloaded.
+
+## Results
+
+`python scripts/evaluate.py --cases 200` hides one item from each of 200 held-out baskets (the drill's cases) and
+checks whether it appears in each method's top N suggestions. Full report: [results/eval.md](results/eval.md).
+**200 cases were used to save time** (a 400-case run was stopped), so one case moves a hit rate by 0.005.
+
+| method (200 cases) | hits@1 | hits@5 | hits@10 |
+|---|---|---|---|
+| model (100-step SmolLM2-135M, 20 samples) | 0.025 | 0.060 | 0.075 |
+| frequency baseline (best sellers) | 0.005 | 0.080 | 0.120 |
+| item-to-item counting | 0.135 | 0.170 | 0.200 |
+
+Model minus frequency baseline: hits@1 +0.020 (95% range +0.000 to +0.045), hits@10 -0.045 (-0.090 to +0.005).
+The model's first guess beats the best sellers' first guess slightly, but neither difference is clearly real
+with 200 cases. Plain item-to-item counting is clearly better than the 100-step model at every N (hits@10 -0.125,
+-0.180 to -0.070), which matches the drill's finding that counting is the bar to beat after such short training.
 
 ## Settings and secrets
 

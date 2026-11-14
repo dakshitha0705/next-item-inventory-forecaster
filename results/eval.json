@@ -1,0 +1,63 @@
+{
+ "cases": 200,
+ "note": "200 cases were used to save time (a 400-case run was stopped at ~2.8 s per case); with 200 cases one case moves a hit rate by 0.005.",
+ "samples_per_prediction": 20,
+ "model_dir": "models/forecaster",
+ "seconds": 768.3,
+ "seconds_per_case": 3.84,
+ "model_share_of_suggestions": 0.9984999999999999,
+ "hits": {
+  "model": {
+   "hits@1": 0.025,
+   "hits@5": 0.06,
+   "hits@10": 0.075
+  },
+  "model only": {
+   "hits@1": 0.025,
+   "hits@5": 0.06,
+   "hits@10": 0.075
+  },
+  "frequency baseline": {
+   "hits@1": 0.005,
+   "hits@5": 0.08,
+   "hits@10": 0.12
+  },
+  "item-to-item counting": {
+   "hits@1": 0.135,
+   "hits@5": 0.17,
+   "hits@10": 0.2
+  }
+ },
+ "differences_95pct_bootstrap": {
+  "model - frequency baseline, hits@1": {
+   "mean": 0.02,
+   "low": 0.0,
+   "high": 0.045
+  },
+  "model - frequency baseline, hits@5": {
+   "mean": -0.02,
+   "low": -0.06,
+   "high": 0.02
+  },
+  "model - frequency baseline, hits@10": {
+   "mean": -0.045,
+   "low": -0.09,
+   "high": 0.005
+  },
+  "model - item-to-item counting, hits@1": {
+   "mean": -0.11,
+   "low": -0.155,
+   "high": -0.065
+  },
+  "model - item-to-item counting, hits@5": {
+   "mean": -0.11,
+   "low": -0.16,
+   "high": -0.06
+  },
+  "model - item-to-item counting, hits@10": {
+   "mean": -0.125,
+   "low": -0.18,
+   "high": -0.07
+  }
+ }
+}

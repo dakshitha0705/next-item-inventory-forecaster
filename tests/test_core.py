@@ -245,6 +245,28 @@ def test_search_box_narrows_the_basket_choices(app_without_model):
 
 
 # Milestone 5: Evaluate model performance against a simple baseline.
-@pytest.mark.skip(reason="remove this line when you start milestone 5")
-def test_milestone_5():
-    raise NotImplementedError("write the test for milestone 5")
+def test_top_n_accuracy_on_toy_inputs():
+    predictions = [["a", "b", "c"], ["c", "a"], [], ["b", "a", "d"]]
+    targets = ["a", "a", "a", "d"]
+    assert core.hits(predictions, targets, 1) == [1, 0, 0, 0]
+    assert core.top_n_accuracy(predictions, targets, 1) == 0.25
+    assert core.top_n_accuracy(predictions, targets, 2) == 0.5
+    assert core.top_n_accuracy(predictions, targets, 10) == 0.75
+    with pytest.raises(ValueError):
+        core.hits(predictions, targets[:2], 1)                      # one ranked list per target
+
+
+def test_frequency_baseline_ranks_the_most_frequent_first():
+    baskets = [["milk", "bread"], ["milk", "eggs"], ["milk", "milk"], ["eggs"], ["tea"]]
+    baseline = core.frequency_baseline(baskets)
+    assert [item for item, _ in baseline] == ["milk", "eggs", "bread", "tea"]    # ties alphabetical
+    assert baseline[0][1] == pytest.approx(3 / 5)                                 # a repeat counts once per basket
+    preds = core.baseline_predictions(["milk"], baseline, top_n=2)
+    assert [p.item for p in preds] == ["eggs", "bread"] and {p.source for p in preds} == {"baseline"}
+
+
+def test_bootstrap_range_brackets_the_difference():
+    a, b = [1, 1, 0, 1, 1, 0, 1, 1] * 10, [0, 1, 0, 0, 1, 0, 0, 1] * 10
+    mean, low, high = core.bootstrap_difference(a, b)
+    assert mean == pytest.approx(0.375) and low < mean < high and low > 0
+    assert core.bootstrap_difference(a, a) == (0.0, 0.0, 0.0)

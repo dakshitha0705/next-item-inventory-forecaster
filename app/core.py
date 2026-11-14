@@ -182,12 +182,28 @@ def predict_next(basket, model=None, tokenizer=None, catalog=None, top_n: int = 
 
 
 # --- Milestone 4: Build a Streamlit UI to input a partial basket and display predictions.
-# Hint: Utilize Streamlit widgets like `st.text_input` and `st.button` for the UI.
-def milestone_4():  # TODO(milestone 4)
-    raise NotImplementedError("TODO(milestone 4)")
+# The page is `app/main.py`; it only calls the functions above.
 
 
 # --- Milestone 5: Evaluate model performance against a simple baseline.
-# Hint: Compare your model's top-N accuracy against a simple frequency-based baseline.
-def milestone_5():  # TODO(milestone 5)
-    raise NotImplementedError("TODO(milestone 5)")
+# Held-out baskets with one item hidden: does the hidden item appear in the top N suggestions? The baseline
+# (`frequency_baseline`, above) always suggests the best sellers. `scripts/evaluate.py` runs the comparison.
+
+
+def hits(predictions, targets, n: int) -> list[int]:
+    """Per case: 1 if the target is among the first `n` predicted items, else 0."""
+    return [int(target in list(ranked)[:n]) for ranked, target in zip(predictions, targets, strict=True)]
+
+
+def top_n_accuracy(predictions, targets, n: int) -> float:
+    """Share of cases whose hidden item is in the top `n`. `predictions` holds one ranked item list per case."""
+    per_case = hits(predictions, targets, n)
+    return sum(per_case) / max(1, len(per_case))
+
+
+def bootstrap_difference(a, b, n_resamples: int = 5000, seed: int = 0) -> tuple[float, float, float]:
+    """Mean of a - b over paired cases, with a bootstrap 95% range (resampling cases)."""
+    diff = np.asarray(a, dtype=float) - np.asarray(b, dtype=float)
+    rng = np.random.default_rng(seed)
+    means = diff[rng.integers(len(diff), size=(n_resamples, len(diff)))].mean(axis=1)
+    return float(diff.mean()), float(np.percentile(means, 2.5)), float(np.percentile(means, 97.5))
