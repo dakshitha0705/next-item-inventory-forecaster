@@ -6,8 +6,9 @@ see what sells together and reorder the right stock. The predictions come from a
 It completes a basket the way it would complete a sentence. A best-seller (frequency) baseline is there to compare
 against and to fall back on.
 
-![Screenshot of the Streamlit page: basket on the left, ranked next items with confidence bars](docs/screenshot.png)
-<!-- Screenshot placeholder: run the app and save a screenshot as docs/screenshot.png -->
+![The Streamlit page: catalogue search, a partial basket of milk, the suggestion slider and a category filter](docs/screenshot.png)
+
+![Results: ten likely next items with category, confidence bar and source (model or baseline)](docs/screenshot-results.png)
 
 ## What it does
 
