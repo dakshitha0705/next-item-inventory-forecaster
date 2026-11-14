@@ -149,19 +149,28 @@ def frequency_baseline(train_baskets) -> list[tuple[str, float]]:
     return [(item, count / n) for item, count in sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))]
 
 
-def baseline_predictions(basket, baseline, top_n: int = 10) -> list[Prediction]:
-    """The top `top_n` best sellers not already in the basket."""
+def baseline_predictions(basket, baseline, top_n: int = 10, allowed=None) -> list[Prediction]:
+    """The top `top_n` best sellers not already in the basket (and in `allowed`, if given)."""
     held = set(basket)
-    return [Prediction(item, share, "baseline") for item, share in baseline if item not in held][:top_n]
+    return [Prediction(item, share, "baseline") for item, share in baseline
+            if item not in held and (allowed is None or item in allowed)][:top_n]
+
+
+def items_in_categories(categories) -> set[str] | None:
+    """The SKUs in the chosen categories, for the `allowed` filter; None (no filter) when none are chosen."""
+    chosen = set(categories or [])
+    return {item for item, category in catalog_categories().items() if category in chosen} if chosen else None
 
 
 def predict_next(basket, model=None, tokenizer=None, catalog=None, top_n: int = 10, n_samples: int = 20,
-                 max_new_tokens: int = 24, seed: int = 0, baseline=None, sampler=None) -> list[Prediction]:
+                 max_new_tokens: int = 24, seed: int = 0, baseline=None, sampler=None,
+                 allowed=None) -> list[Prediction]:
     """The `top_n` items most likely to be bought next with `basket`, best first.
 
     The model completes "Basket: <basket in a seeded random order>;" `n_samples` times; each completion counts as
     one vote for the catalogue item it names (items already in the basket and made-up names get no vote). If fewer
     than `top_n` items get a vote, the rest are filled from `baseline` (see `frequency_baseline`), marked as such.
+    `allowed` (a set of items, e.g. from `items_in_categories`) keeps only those items, from the model and the fill.
     `sampler` replaces model + tokenizer (tests use a fake one)."""
     catalog = set(catalog if catalog is not None else catalog_names())
     sampler = sampler or model_sampler(model, tokenizer)
@@ -170,14 +179,14 @@ def predict_next(basket, model=None, tokenizer=None, catalog=None, top_n: int = 
     votes = Counter()
     for text in sampler(prompt, n_samples, max_new_tokens, seed):
         item = parse_item(text, catalog)
-        if item is not None and item not in held:
+        if item is not None and item not in held and (allowed is None or item in allowed):
             votes[item] += 1
     popularity = dict(baseline or [])          # ties (common with few samples) go to the better seller
     ranked = sorted(votes, key=lambda item: (-votes[item], -popularity.get(item, 0.0), item))[:top_n]
     predictions = [Prediction(item, votes[item] / n_samples, "model") for item in ranked]
     if len(predictions) < top_n and baseline:
         chosen = held | {p.item for p in predictions}
-        predictions += baseline_predictions(chosen, baseline, top_n - len(predictions))
+        predictions += baseline_predictions(chosen, baseline, top_n - len(predictions), allowed)
     return predictions
 
 

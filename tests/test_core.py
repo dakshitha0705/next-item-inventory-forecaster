@@ -270,3 +270,23 @@ def test_bootstrap_range_brackets_the_difference():
     mean, low, high = core.bootstrap_difference(a, b)
     assert mean == pytest.approx(0.375) and low < mean < high and low > 0
     assert core.bootstrap_difference(a, a) == (0.0, 0.0, 0.0)
+
+
+# Stretch: filter predicted next items by product category.
+def test_category_filter_keeps_only_allowed_items():
+    allowed = {"Tomato 1 kg", "Potato 1 kg", "Onion 1 kg"}
+    preds = core.predict_next([], catalog=CATALOG, top_n=3, n_samples=4, baseline=BASELINE, allowed=allowed,
+                              sampler=fake_sampler([" Tomato 1 kg;", " Bread;", " Milk 500 ml;"]))
+    assert [p.item for p in preds] == ["Tomato 1 kg", "Onion 1 kg"]     # Bread/Milk filtered; fill also filtered
+    assert [p.source for p in preds] == ["model", "baseline"]
+    pulses = core.items_in_categories(["Pulses"])
+    assert pulses and all(core.catalog_categories()[i] == "Pulses" for i in pulses)
+    assert core.items_in_categories([]) is None
+
+
+def test_page_category_filter(app_without_model):
+    at = app_without_model
+    at.multiselect(key="categories").set_value(["Spices"]).run()
+    at.button(key="predict").click().run()
+    table = at.dataframe[0].value
+    assert len(table) == 10 and set(table["category"]) == {"Spices"}

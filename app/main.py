@@ -42,14 +42,19 @@ options = [n for n in names if n in set(matches) | set(st.session_state.basket)]
 st.multiselect(f"Partial basket ({len(matches)} catalogue items match the search)", options, key="basket",
                placeholder="Pick the items already in the basket")
 top_n = st.slider("How many suggestions", min_value=3, max_value=20, value=10)
+only = st.multiselect("Only suggest items from these categories (optional)", sorted(set(categories.values())),
+                      key="categories", placeholder="All categories")
 
 if st.button("Predict next items", type="primary", key="predict"):
     started = time.time()
     basket = st.session_state.basket
+    allowed = core.items_in_categories(only)
     if sampler is not None:
-        predictions = core.predict_next(basket, catalog=names, top_n=top_n, baseline=baseline, sampler=sampler)
+        # with a category filter the model's samples rarely land in it, so draw more of them
+        predictions = core.predict_next(basket, catalog=names, top_n=top_n, baseline=baseline, sampler=sampler,
+                                        allowed=allowed, n_samples=20 if allowed is None else 60)
     else:
-        predictions = core.baseline_predictions(basket, baseline, top_n)
+        predictions = core.baseline_predictions(basket, baseline, top_n, allowed)
     st.session_state.results = (predictions, time.time() - started)
 
 if "results" in st.session_state:
